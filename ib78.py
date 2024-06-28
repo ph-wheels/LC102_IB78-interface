@@ -44,7 +44,7 @@ ib78.isOpen()
 # Create the Window
 window = sg.Window('LC102 - IB78 tester', layout)
 
-# splits result string into various fields
+# splits result string into various fields (not yet used)
 def res_status(xdata):  
     hdr = xdata[:3]
     dat = xdata[4:15]
@@ -81,12 +81,11 @@ while True:
 
     # used as temporary command option
     if event == 'Send':
-        ib78.flush()
-        #ib78.write(str.encode(str(18) + '\n'))
-        ib78.write(str.encode('0V' + '\r\n'))
-        ib78.write(str.encode('END' + '\r\n'))
+        #ib78.flush()
+        #ib78.write(str.encode('NFC' + '\n'))
+        #ib78.write(str.encode('0V' + '\r\n'))
         #ib78.write(str.encode('CPO' + '\n'))
-        print('send')
+        #print('send')
 
     # processes the response data from instrument and fills in measurement values
     if ib78.inWaiting() > 0:
