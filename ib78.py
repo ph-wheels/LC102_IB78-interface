@@ -2,6 +2,9 @@ import PySimpleGUI as sg
 import serial
 import time
 
+# change 29/6/24
+# add voltage 'V' string if not provide by user
+
 cap_type = ["Aluminum Lytics","Double Layer Lytics","Tantalum Caps","Ceramic Caps","All Other Caps"]
 cap_abrv = ["ALM","DBL","TAN","CER","AOC"]
 tst_type = ["Cap Value","Cap Leakage (Curr)","Cap Leakage (Ohms)","Dielectric Absorption","Cap ESR"]
@@ -28,6 +31,8 @@ err_msg = ['Component Type selection error',
     'Invalid IEEE command',
     'Component out of test range']
 
+fmt_txt = [' V', ' UF', ' +%', ' -%']
+
 s = ['','','','','','']
 x_out = ''
 delay = 1.5
@@ -44,7 +49,7 @@ ib78.isOpen()
 # Create the Window
 window = sg.Window('LC102 - IB78 tester', layout)
 
-# splits result string into various fields (not yet used)
+# splits result string into various fields
 def res_status(xdata):  
     hdr = xdata[:3]
     dat = xdata[4:15]
@@ -53,6 +58,19 @@ def res_status(xdata):
 # translates code into text string
 def err_txt(code):
     return err_msg[int(code) - 1]
+
+# todo routine to check and adjust string format
+def chk_fmt (cmd, idx):
+    if (idx == 1 and len(cmd) > 0 and cmd.upper().find('V') == -1):
+        return cmd + ' V'
+    elif (idx == 2 and len(cmd) > 0 and cmd.upper().find('F') == -1):
+        return cmd + ' UF'
+    elif (idx == 3 and len(cmd) > 0 and cmd.upper().find('%') == -1):
+        return cmd + ' +%'
+    elif (idx == 4 and len(cmd) > 0 and cmd.upper().find('%') == -1):
+        return cmd + ' -%'
+    return cmd
+
 
 # send data from ib78 to lc102 instrument 
 def lc102_cmd(cmds):
@@ -81,11 +99,12 @@ while True:
 
     # used as temporary command option
     if event == 'Send':
-        #ib78.flush()
-        #ib78.write(str.encode('NFC' + '\n'))
-        #ib78.write(str.encode('0V' + '\r\n'))
+        ib78.flush()
+        #ib78.write(str.encode(str(18) + '\n'))
+        ib78.write(str.encode('0V' + '\r\n'))
+        ib78.write(str.encode('END' + '\r\n'))
         #ib78.write(str.encode('CPO' + '\n'))
-        #print('send')
+        print('send')
 
     # processes the response data from instrument and fills in measurement values
     if ib78.inWaiting() > 0:
@@ -132,7 +151,8 @@ while True:
                 elif str(val) == 'tst_type':
                     s[idx] = tst_abrv[tst_type.index(values[val])]
                 else:
-                    s[idx] = values[val]
+                    s[idx] = chk_fmt (values[val], idx)
+                    #s[idx] = values[val]
                 idx = idx + 1
         # test for previous command completed else wait
         while(ack == 0):
